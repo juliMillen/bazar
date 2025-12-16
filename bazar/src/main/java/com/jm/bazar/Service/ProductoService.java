@@ -7,6 +7,7 @@ import com.jm.bazar.Repository.IProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -23,6 +24,17 @@ public class ProductoService {
 
     public ProductoDTO obtenerProductoPorId(Long id){
         return Mapper.mapToDTO(productoRepository.findById(id).orElseThrow( () -> new RuntimeException("Producto no encontrado")) );
+    }
+
+    public List<ProductoDTO> obtenerProductoPorStock(int stockDisponible){
+        List<Producto> listaProductos = productoRepository.findAll();
+        List<ProductoDTO> listaDTO = new ArrayList<>();
+        for(Producto p : listaProductos){
+            if(p.getCantDisponible() <= stockDisponible){
+                listaDTO.add(Mapper.mapToDTO(p));
+            }
+        }
+        return listaDTO;
     }
 
     public ProductoDTO crearProducto(ProductoDTO productoDTO){

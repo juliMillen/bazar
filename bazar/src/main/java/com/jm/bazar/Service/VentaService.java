@@ -1,7 +1,6 @@
 package com.jm.bazar.Service;
 
-import com.jm.bazar.DTO.DetalleVentaDTO;
-import com.jm.bazar.DTO.VentaDTO;
+import com.jm.bazar.DTO.*;
 import com.jm.bazar.Entity.Cliente;
 import com.jm.bazar.Entity.DetalleVenta;
 import com.jm.bazar.Entity.Producto;
@@ -13,6 +12,7 @@ import com.jm.bazar.Repository.IVentaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +42,56 @@ public class VentaService {
     public VentaDTO obtenerVentaPorId(Long id){
         VentaDTO ventaDTO = Mapper.mapToDTO(ventaRepository.findById(id).orElseThrow( () -> new RuntimeException( "Venta no encontrada" ) ) );
         return ventaDTO;
+    }
+
+    public List<ProductoDTO> listarProductosXVenta(Long id){
+        Venta venta = ventaRepository.findById(id).orElseThrow( () -> new RuntimeException( "Venta no encontrada" ) );
+
+        return venta.getListaDetalles().stream()
+                .map(detalle -> Mapper.mapToDTO(detalle.getProducto()))
+                .toList();
+    }
+
+    public ResumenVentasXDiaDTO obtenerDatosPorDia(LocalDate fecha){
+        List<Venta> ventas = ventaRepository.findByFechaVenta(fecha);
+
+        if(ventas.isEmpty()){
+            throw new RuntimeException("No hay ventas registradas en esa fecha");
+        }
+
+        double montoTotal = 0;
+        int cantVentas = 0;
+        for(Venta vent : ventas){
+            montoTotal += vent.getTotal();
+            cantVentas++;
+        }
+        ResumenVentasXDiaDTO resumen = new ResumenVentasXDiaDTO();
+        resumen.setFecha(fecha);
+        resumen.setMontoTotal(montoTotal);
+        resumen.setCantVentas(cantVentas);
+        return resumen;
+    }
+
+    public MayorVentaDTO obtenerMayorVenta(){
+        List<Venta> ventas = ventaRepository.findAll();
+        if(ventas.isEmpty()){
+            throw new RuntimeException("No hay ventas registradas");
+        }
+
+        Venta mayorVenta = ventas.get(0);
+
+        for(Venta vent : ventas){
+            if(vent.getTotal() > mayorVenta.getTotal()){
+                mayorVenta = vent;
+            }
+        }
+        MayorVentaDTO mayorVentaDTO = new MayorVentaDTO();
+        mayorVentaDTO.setCodigoVenta( mayorVenta.getCodigoVenta() );
+        mayorVentaDTO.setTotal( mayorVenta.getTotal() );
+        mayorVentaDTO.setCantProductos(mayorVenta.getListaDetalles().size());
+        mayorVentaDTO.setNombreCliente(mayorVenta.getUnCliente().getNombre());
+        mayorVentaDTO.setApellidoCliente(mayorVenta.getUnCliente().getApellido() );
+        return mayorVentaDTO;
     }
 
     public VentaDTO crearVenta(VentaDTO ventaDTO){
@@ -75,7 +125,7 @@ public class VentaService {
 
         for(DetalleVentaDTO detDTO : ventaDTO.getListaDTO()){
 
-            Producto prod = productoRepository.findByNombreProducto(detDTO.getNombreProducto()).orElseThrow( () -> new RuntimeException("Producto no Encontrado"));
+            Producto prod = productoRepository.findByNombre(detDTO.getNombreProducto()).orElseThrow( () -> new RuntimeException("Producto no Encontrado"));
 
             if(detDTO.getCantidadProducto() > prod.getCantDisponible()){
                 throw new RuntimeException( "Cantidad no disponible" );
