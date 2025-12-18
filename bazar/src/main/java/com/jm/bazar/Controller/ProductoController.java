@@ -30,7 +30,7 @@ public class ProductoController {
         return new ResponseEntity<>(productoDTO, HttpStatus.OK);
     }
 
-    @GetMapping("/{stockDisponible}")
+    @GetMapping("/stock/{stockDisponible}")
     public List<ProductoDTO> listarProductosXStock(@PathVariable int stockDisponible){
         List<ProductoDTO> listaDTO = productoService.obtenerProductoPorStock(stockDisponible);
         if(listaDTO.isEmpty()){

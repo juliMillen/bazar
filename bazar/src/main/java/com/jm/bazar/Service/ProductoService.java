@@ -41,7 +41,7 @@ public class ProductoService {
         Producto producto = Producto.builder()
                 .nombre(productoDTO.getNombre())
                 .costo(productoDTO.getCosto())
-                .marca(productoDTO.getNombre())
+                .marca(productoDTO.getMarca())
                 .cantDisponible(productoDTO.getCantDisponible())
                 .build();
         return Mapper.mapToDTO(productoRepository.save(producto));
